@@ -37,8 +37,8 @@ jobs:
         run: terraform fmt -check 
 
       # Step 4: Initialize Terraform
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform init
+        run: terraform init -backend-config=backend-dev.hcl
 
       # Step 5: Plan Terraform deployment (preview the changes)
       - name: Terraform Plan

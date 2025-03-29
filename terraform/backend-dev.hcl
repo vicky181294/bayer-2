@@ -1,4 +1,4 @@
-bucket  = "abg-rateshop-tfstate-store-dev"
-key     = "aws-devops-datatransformation/abg-consumerapp/infra/fleet/db2/terraform.tfstate"
+bucket  = "bayer-terraform-statefile-store"
+key     = "dev/bayer/terraform.tfstate"
 encrypt = true
 region  = "us-east-1"
