@@ -39,11 +39,14 @@ jobs:
       # Step 4: Initialize Terraform
       - name: Terraform init
         run: terraform init -backend-config=backend-dev.hcl
+        working-directory: bayer/terraform
 
       # Step 5: Plan Terraform deployment (preview the changes)
       - name: Terraform Plan
-        run: terraform plan -out=tfplan 
+        run: terraform plan -out=tfplan
+        working-directory: bayer/terraform
 
       # Step 6: Apply Terraform deployment
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+        working-directory: bayer/terraform
