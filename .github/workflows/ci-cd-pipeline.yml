@@ -64,11 +64,9 @@ jobs:
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build \
-            --cache-from $ECR_REGISTRY/appointment-service:latest \
-            --tag $ECR_REGISTRY/appointment-service:$IMAGE_TAG \
-            --tag $ECR_REGISTRY/appointment-service:latest \
-            ./app/appointment-service
+          # Build Docker image
+          docker build -t $ECR_REGISTRY/patient-service:$IMAGE_TAG ./patient-service
+          docker tag $ECR_REGISTRY/patient-service:$IMAGE_TAG $ECR_REGISTRY/patient-service:latest
           docker push $ECR_REGISTRY/appointment-service:$IMAGE_TAG
           docker push $ECR_REGISTRY/appointment-service:latest
 
