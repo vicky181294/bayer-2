@@ -42,8 +42,7 @@ jobs:
 
       # Step 5: Plan Terraform deployment (preview the changes)
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
-        if: github.event_name == 'pull_request' 
+        run: terraform plan -out=tfplan 
 
       # Step 6: Apply Terraform deployment
       - name: Terraform Apply
