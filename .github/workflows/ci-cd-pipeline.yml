@@ -1,0 +1,112 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        id: ecr-login
+
+      - name: Build and Push Patient Service
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            --cache-from $ECR_REGISTRY/patient-service:latest \
+            --tag $ECR_REGISTRY/patient-service:$IMAGE_TAG \
+            --tag $ECR_REGISTRY/patient-service:latest \
+            ./app/patient-service
+          docker push $ECR_REGISTRY/patient-service:$IMAGE_TAG
+          docker push $ECR_REGISTRY/patient-service:latest
+
+      - name: Build and Push Appointment Service
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            --cache-from $ECR_REGISTRY/appointment-service:latest \
+            --tag $ECR_REGISTRY/appointment-service:$IMAGE_TAG \
+            --tag $ECR_REGISTRY/appointment-service:latest \
+            ./app/appointment-service
+          docker push $ECR_REGISTRY/appointment-service:$IMAGE_TAG
+          docker push $ECR_REGISTRY/appointment-service:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.3.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Update and Apply Patient Service
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          sed -i "s|<PATIENT_IMAGE_TAG>|$ECR_REGISTRY/patient-service:$IMAGE_TAG|g" \
+            terraform/patient-service-task-definition.json
+          terraform plan -out=patient-service.tfplan \
+            -var="service_name=patient-service"
+          terraform apply -auto-approve patient-service.tfplan
+
+      - name: Update and Apply Appointment Service
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          sed -i "s|<APPOINTMENT_IMAGE_TAG>|$ECR_REGISTRY/appointment-service:$IMAGE_TAG|g" \
+            terraform/appointment-service-task-definition.json
+          terraform plan -out=appointment-service.tfplan \
+            -var="service_name=appointment-service"
+          terraform apply -auto-approve appointment-service.tfplan
