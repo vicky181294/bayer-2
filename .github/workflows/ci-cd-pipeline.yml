@@ -33,6 +33,19 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         id: ecr-login
 
+      # Add this step to automatically get ECR registry
+      - name: Get ECR Registry
+        id: get-ecr-registry
+        run: |
+          echo "ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com" >> $GITHUB_ENV
+
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Verify ECR Registry is set
+          echo "Using ECR Registry: $ECR_REGISTRY"
+
       - name: Build and Push Patient Service
         env:
           ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
