@@ -5,7 +5,7 @@ env                   = "dev"
 domain                = "bayer"
 tag_env               = "Development"
 ecs_cluster_id        = "arn:aws:ecs:us-east-1:539935451710:cluster/bayer-cluster-dev"
-ECSTaskExecution_role = "ECSTaskExecution_role"
+# ECSTaskExecution_role = "ECSTaskExecution_role"
 retention_day         = 30
 
 ecs_services = [

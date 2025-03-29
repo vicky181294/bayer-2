@@ -32,9 +32,9 @@ variable "ecs_cluster_id" {
   type        = string
 }
 
-variable "ECSTaskExecution_role" {
-  type = string
-}
+# variable "ECSTaskExecution_role" {
+#   type = string
+# }
 
 variable "aws_region" {
   type = string

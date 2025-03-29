@@ -48,7 +48,7 @@ data "template_file" "task_definition" {
 
 # IAM role for task execution
 data "aws_iam_role" "ecs_execution_role" {
-  name = var.ECSTaskExecution_role
+  name = "ECSTaskExecution_role"
 }
 
 # Create ECS Task Definitions dynamically
